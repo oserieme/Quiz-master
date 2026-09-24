@@ -1,0 +1,107 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Secure Server-Side Administrator Verification:
+    // Only the verified primary Google account (cryptographically authenticated via Google OAuth token)
+    // or an authenticated session whose UID exists in the immutable /admins collection with matching verified email
+    function isPrimaryAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email == 'oseriemeebhomien@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isPrimaryAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.email == 'oseriemeebhomien@gmail.com'
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Health check document for validating connection
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // Question Management
+    // - Any user or guest can read questions to play quizzes
+    // - STRICTLY ONLY the verified administrator can add, edit, or delete questions
+    match /questions/{questionId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Administrators registry (Server-side verified UID storage)
+    // - Only the verified primary admin can register or modify their admin document
+    // - Any signed-in user can read to check authorization status
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isPrimaryAdmin() && adminId == request.auth.uid;
+    }
+
+    // User profiles and player data
+    match /users/{userId} {
+      allow read: if isSignedIn();
+
+      // Enforce that normal players CANNOT elevate themselves to 'admin' role
+      // A new user document can only have role == 'player' (or unset), unless created by the verified primary admin
+      allow create: if isOwner(userId) && (
+        !('role' in request.resource.data) ||
+        request.resource.data.role == 'player' ||
+        isPrimaryAdmin()
+      );
+
+      // Existing users can update stats, name, photo, but CANNOT modify the 'role' field
+      allow update: if isOwner(userId) && (
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) ||
+        isPrimaryAdmin()
+      );
+      allow delete: if false;
+
+      // Nested quizResults under user UID (player private history)
+      // A user can ONLY read and create their own quiz results under their UID
+      match /quizResults/{resultId} {
+        allow read, create: if isOwner(userId);
+        allow update, delete: if false;
+      }
+
+      // User unlocked achievements and badges
+      match /achievements/{achievementId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Leaderboard & score records
+    match /scores/{scoreId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Top-level quizResults collection: used for public leaderboard aggregation
+    // Readable so leaderboard rankings can be computed from Firestore data
+    // Creates restricted to authenticated user submitting their own record; updates & deletes strictly forbidden
+    match /quizResults/{resultId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}

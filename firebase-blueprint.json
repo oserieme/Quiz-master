@@ -1,0 +1,356 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile document containing user identity, stats, and login tracking",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Firebase Authentication User ID"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Player's public display name"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "User email address"
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "User profile avatar URL"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user profile was initialized"
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "description": "Timestamp of most recent sign-in"
+        },
+        "totalQuizzesPlayed": {
+          "type": "number",
+          "description": "Total number of completed quiz sessions"
+        },
+        "highScore": {
+          "type": "number",
+          "description": "Personal highest score across quizzes"
+        },
+        "unlockedAchievements": {
+          "type": "array",
+          "description": "List of unlocked achievement IDs"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["player", "admin"],
+          "description": "Access control role of the user (player or admin)"
+        }
+      },
+      "required": ["uid", "displayName", "email", "createdAt", "lastLoginAt"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "A quiz question record managed by administrators and played by users",
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 1000,
+          "description": "The question text prompt"
+        },
+        "options": {
+          "type": "array",
+          "description": "Exactly four distinct answer choices",
+          "items": {
+            "type": "string"
+          }
+        },
+        "correctAnswerIndex": {
+          "type": "number",
+          "description": "Index (0-3) of the correct answer choice in options"
+        },
+        "correctAnswer": {
+          "type": "string",
+          "description": "Exact text of the correct answer choice"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["General Knowledge", "Science", "History", "Geography", "Technology", "Sports"],
+          "description": "Subject category"
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["Easy", "Medium", "Hard"],
+          "description": "Question difficulty level"
+        },
+        "explanation": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Educational explanation revealed after the question is answered"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp when the question was added"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp when the question was last modified"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "User ID of the administrator who created the question"
+        }
+      },
+      "required": ["question", "options", "correctAnswerIndex", "category", "difficulty"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Record designating an administrator",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Authentication User ID"
+        },
+        "email": {
+          "type": "string",
+          "description": "Google email address of administrator"
+        },
+        "role": {
+          "type": "string",
+          "description": "Admin role identifier"
+        },
+        "assignedAt": {
+          "type": "string",
+          "description": "ISO timestamp when admin role was granted"
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "UserAchievement": {
+      "title": "UserAchievement",
+      "description": "An unlocked badge/achievement for an authenticated user",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Firebase Authentication User ID"
+        },
+        "achievementId": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Unique key identifier for achievement"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Display title of achievement"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Description of achievement criteria"
+        },
+        "unlockedAt": {
+          "type": "string",
+          "description": "ISO timestamp when unlocked"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Category or type of achievement"
+        }
+      },
+      "required": ["userId", "achievementId", "title", "unlockedAt"]
+    },
+    "QuizScore": {
+      "title": "QuizScore",
+      "description": "A completed quiz record for score tracking and leaderboard display",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Authentication UID of the player"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Name of the player displayed on leaderboards"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Category played"
+        },
+        "difficulty": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Difficulty level played"
+        },
+        "score": {
+          "type": "number",
+          "description": "Score achieved (0-10)"
+        },
+        "totalQuestions": {
+          "type": "number",
+          "description": "Total questions in the quiz (10)"
+        },
+        "percentage": {
+          "type": "number",
+          "description": "Accuracy percentage (0-100)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Server timestamp of record creation"
+        }
+      },
+      "required": ["userId", "displayName", "category", "difficulty", "score", "totalQuestions", "percentage", "createdAt"]
+    },
+    "QuizResult": {
+      "title": "QuizResult",
+      "description": "Comprehensive quiz attempt record tied to an authenticated user",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Firebase Authentication User ID"
+        },
+        "userName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Player's display or user name"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Player's display name"
+        },
+        "userEmail": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "User email address"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "User email address"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Quiz category"
+        },
+        "difficulty": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Quiz difficulty level (Easy, Medium, Hard)"
+        },
+        "totalQuestions": {
+          "type": "number",
+          "description": "Total number of questions in quiz"
+        },
+        "correctAnswers": {
+          "type": "number",
+          "description": "Count of correctly answered questions"
+        },
+        "incorrectAnswers": {
+          "type": "number",
+          "description": "Count of incorrectly answered or timed out questions"
+        },
+        "score": {
+          "type": "number",
+          "description": "Final score earned in quiz"
+        },
+        "percentage": {
+          "type": "number",
+          "description": "Percentage score from 0 to 100"
+        },
+        "timeTaken": {
+          "type": "number",
+          "description": "Time taken to complete the quiz in seconds"
+        },
+        "timeTakenFormatted": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Formatted time duration string (e.g. 45s, 1m 20s)"
+        },
+        "completedAt": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Timestamp when the quiz was completed"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": [
+        "userId",
+        "userName",
+        "userEmail",
+        "category",
+        "difficulty",
+        "totalQuestions",
+        "correctAnswers",
+        "incorrectAnswers",
+        "score",
+        "percentage",
+        "timeTaken",
+        "completedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "User profile records stored under user authentication ID"
+    },
+    "/users/{userId}/quizResults/{resultId}": {
+      "schema": {
+        "$ref": "#/entities/QuizResult"
+      },
+      "description": "Quiz results stored directly under the authenticated user's UID"
+    },
+    "/users/{userId}/achievements/{achievementId}": {
+      "schema": {
+        "$ref": "#/entities/UserAchievement"
+      },
+      "description": "Persistent unlocked achievements and badges for the authenticated user"
+    },
+    "/scores/{scoreId}": {
+      "schema": {
+        "$ref": "#/entities/QuizScore"
+      },
+      "description": "Individual quiz score submissions for leaderboards and history"
+    },
+    "/quizResults/{resultId}": {
+      "schema": {
+        "$ref": "#/entities/QuizResult"
+      },
+      "description": "Individual quiz attempt results associated with the authenticated user UID"
+    },
+    "/questions/{questionId}": {
+      "schema": {
+        "$ref": "#/entities/Question"
+      },
+      "description": "Admin-curated and dynamic questions stored in Firestore and fetched for quiz gameplay"
+    },
+    "/admins/{adminId}": {
+      "schema": {
+        "$ref": "#/entities/AdminRecord"
+      },
+      "description": "Registry of authorized administrators who can manage questions"
+    }
+  }
+}

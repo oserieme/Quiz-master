@@ -1,0 +1,7 @@
+{
+  "name": "Quiz Master",
+  "description": "A modern, responsive General Knowledge Quiz Game featuring 10-question rounds across Science, History, Geography, Technology, Sports, and General Knowledge.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
